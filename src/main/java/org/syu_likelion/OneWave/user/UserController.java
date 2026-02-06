@@ -13,6 +13,7 @@ import org.syu_likelion.OneWave.user.dto.ProfileImageUpdateRequest;
 import org.syu_likelion.OneWave.user.dto.ProfileImageUploadResponse;
 import org.syu_likelion.OneWave.user.dto.UpdateUserRequest;
 import org.syu_likelion.OneWave.user.dto.UserResponse;
+import org.syu_likelion.OneWave.feed.dto.MyTeamResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -104,5 +105,11 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteMe(@AuthenticationPrincipal UserDetails userDetails) {
         userService.deleteUser(userDetails.getUsername());
+    }
+
+    @GetMapping("/me/teams")
+    @Operation(summary = "My teams", description = "Get teams I have joined")
+    public java.util.List<MyTeamResponse> myTeams(@AuthenticationPrincipal UserDetails userDetails) {
+        return userService.listMyTeams(userDetails.getUsername());
     }
 }

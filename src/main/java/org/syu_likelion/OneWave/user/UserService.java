@@ -16,6 +16,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailAuthCodeService emailAuthCodeService;
     private final ProfileImageStorage profileImageStorage;
+    private final org.syu_likelion.OneWave.feed.FeedApplicationRepository feedApplicationRepository;
     private final String profileBaseUrl;
 
     public UserService(
@@ -23,12 +24,14 @@ public class UserService {
         PasswordEncoder passwordEncoder,
         EmailAuthCodeService emailAuthCodeService,
         ProfileImageStorage profileImageStorage,
+        org.syu_likelion.OneWave.feed.FeedApplicationRepository feedApplicationRepository,
         @Value("${r2.base-url}") String profileBaseUrl
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailAuthCodeService = emailAuthCodeService;
         this.profileImageStorage = profileImageStorage;
+        this.feedApplicationRepository = feedApplicationRepository;
         this.profileBaseUrl = profileBaseUrl;
     }
 
@@ -104,6 +107,22 @@ public class UserService {
         response.setGender(user.getGender());
         response.setProfileImageUrl(user.getProfileImageUrl());
         return response;
+    }
+
+    public java.util.List<org.syu_likelion.OneWave.feed.dto.MyTeamResponse> listMyTeams(String email) {
+        return feedApplicationRepository.findApprovedByUserEmailWithFeed(email)
+            .stream()
+            .map(application -> {
+                org.syu_likelion.OneWave.feed.dto.MyTeamResponse response =
+                    new org.syu_likelion.OneWave.feed.dto.MyTeamResponse();
+                response.setFeedId(application.getFeed().getFeedId());
+                response.setIdeaTitle(application.getFeed().getIdea().getTitle());
+                response.setOwnerName(application.getFeed().getUser().getName());
+                response.setStack(application.getStack());
+                response.setJoinedAt(application.getUpdatedAt());
+                return response;
+            })
+            .toList();
     }
 
     private String buildProfileUrl(String relativePath) {
