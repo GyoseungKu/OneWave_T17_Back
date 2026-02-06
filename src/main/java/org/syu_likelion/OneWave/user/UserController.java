@@ -9,9 +9,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.syu_likelion.OneWave.auth.dto.MessageResponse;
 import org.syu_likelion.OneWave.auth.dto.PasswordChangeRequest;
+import org.syu_likelion.OneWave.user.dto.ProfileImageUpdateRequest;
+import org.syu_likelion.OneWave.user.dto.ProfileImageUploadResponse;
 import org.syu_likelion.OneWave.user.dto.UpdateUserRequest;
 import org.syu_likelion.OneWave.user.dto.UserResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "User", description = "My page and user profile API")
 @RestController
@@ -62,6 +67,26 @@ public class UserController {
     public MessageResponse requestPasswordChangeEmail(@AuthenticationPrincipal UserDetails userDetails) {
         userService.requestPasswordChangeEmail(userDetails.getUsername());
         return new MessageResponse("Verification code has been sent to your email.");
+    }
+
+    @PostMapping(value = "/me/profile-image/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload profile image", description = "Upload profile image file and return its URL")
+    public ProfileImageUploadResponse uploadProfileImage(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @RequestPart("file") MultipartFile file
+    ) {
+        String url = userService.uploadProfileImage(userDetails.getUsername(), file);
+        return new ProfileImageUploadResponse(url);
+    }
+
+    @PatchMapping("/me/profile-image")
+    @Operation(summary = "Set profile image", description = "Set profile image URL for current user")
+    public MessageResponse setProfileImage(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @Valid @RequestBody ProfileImageUpdateRequest request
+    ) {
+        userService.setProfileImageUrl(userDetails.getUsername(), request.getImageUrl());
+        return new MessageResponse("Profile image updated.");
     }
 
     @PatchMapping("/me/password")

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.syu_likelion.OneWave.auth.dto.AuthResponse;
+import org.syu_likelion.OneWave.auth.dto.EmailCheckResponse;
 import org.syu_likelion.OneWave.auth.dto.EmailRequest;
 import org.syu_likelion.OneWave.auth.dto.EmailVerifyRequest;
 import org.syu_likelion.OneWave.auth.dto.LoginRequest;
@@ -32,6 +33,12 @@ public class AuthController {
     @Operation(summary = "Sign up", description = "Complete signup after email verification")
     public ResponseEntity<SignupResponse> signup(@Valid @RequestBody SignupRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.signup(request));
+    }
+
+    @PostMapping("/signup/email/check")
+    @Operation(summary = "Check email availability", description = "Check if the email is available for signup")
+    public EmailCheckResponse checkSignupEmail(@Valid @RequestBody EmailRequest request) {
+        return authService.checkEmailAvailability(request);
     }
 
     @PostMapping("/signup/email")

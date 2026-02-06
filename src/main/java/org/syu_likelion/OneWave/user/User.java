@@ -40,4 +40,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private Gender gender;
+
+    @Column(name = "profile_image_url", length = 512)
+    private String profileImageUrl;
 }

@@ -1,6 +1,7 @@
 package org.syu_likelion.OneWave.auth;
 
 import org.syu_likelion.OneWave.auth.dto.AuthResponse;
+import org.syu_likelion.OneWave.auth.dto.EmailCheckResponse;
 import org.syu_likelion.OneWave.auth.dto.EmailRequest;
 import org.syu_likelion.OneWave.auth.dto.EmailVerifyRequest;
 import org.syu_likelion.OneWave.auth.dto.LoginRequest;
@@ -41,6 +42,11 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
         emailAuthCodeService.sendCode(request.getEmail(), EmailAuthPurpose.SIGNUP);
+    }
+
+    public EmailCheckResponse checkEmailAvailability(EmailRequest request) {
+        boolean available = !userRepository.existsByEmail(request.getEmail());
+        return new EmailCheckResponse(available);
     }
 
     public void verifySignupEmail(EmailVerifyRequest request) {

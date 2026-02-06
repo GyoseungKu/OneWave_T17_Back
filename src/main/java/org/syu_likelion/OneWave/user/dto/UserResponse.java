@@ -17,4 +17,6 @@ public class UserResponse {
     private LocalDate birthDate;
 
     private Gender gender;
+
+    private String profileImageUrl;
 }

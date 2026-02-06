@@ -4,6 +4,7 @@ import org.syu_likelion.OneWave.auth.email.EmailAuthCodeService;
 import org.syu_likelion.OneWave.auth.email.EmailAuthPurpose;
 import org.syu_likelion.OneWave.user.dto.UpdateUserRequest;
 import org.syu_likelion.OneWave.user.dto.UserResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,11 +15,21 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailAuthCodeService emailAuthCodeService;
+    private final ProfileImageStorage profileImageStorage;
+    private final String profileBaseUrl;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailAuthCodeService emailAuthCodeService) {
+    public UserService(
+        UserRepository userRepository,
+        PasswordEncoder passwordEncoder,
+        EmailAuthCodeService emailAuthCodeService,
+        ProfileImageStorage profileImageStorage,
+        @Value("${r2.base-url}") String profileBaseUrl
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailAuthCodeService = emailAuthCodeService;
+        this.profileImageStorage = profileImageStorage;
+        this.profileBaseUrl = profileBaseUrl;
     }
 
     public UserResponse updateUser(String email, UpdateUserRequest request) {
@@ -60,6 +71,24 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public String uploadProfileImage(String email, org.springframework.web.multipart.MultipartFile file) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        ProfileImageStorage.SavedProfileImage saved = profileImageStorage.save(file);
+        String url = buildProfileUrl(saved.relativePath());
+        user.setProfileImageUrl(url);
+        userRepository.save(user);
+        return url;
+    }
+
+    public void setProfileImageUrl(String email, String imageUrl) {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        user.setProfileImageUrl(imageUrl);
+        userRepository.save(user);
+    }
+
     public UserResponse getMe(String email) {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -73,6 +102,21 @@ public class UserService {
         response.setName(user.getName());
         response.setBirthDate(user.getBirthDate());
         response.setGender(user.getGender());
+        response.setProfileImageUrl(user.getProfileImageUrl());
         return response;
+    }
+
+    private String buildProfileUrl(String relativePath) {
+        if (relativePath == null || relativePath.isBlank()) {
+            return null;
+        }
+        String base = profileBaseUrl;
+        if (base.endsWith("/")) {
+            base = base.substring(0, base.length() - 1);
+        }
+        if (relativePath.startsWith("/")) {
+            relativePath = relativePath.substring(1);
+        }
+        return base + "/" + relativePath;
     }
 }
